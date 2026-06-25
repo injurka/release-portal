@@ -29,14 +29,6 @@ onMounted(() => {
             </li>
           </ul>
         </div>
-        <div class="stat-card">
-          <h3>Активные авторы</h3>
-          <ul>
-            <li v-for="u in stats.top_users" :key="u.user">
-              {{ u.user }} ({{ u.count }})
-            </li>
-          </ul>
-        </div>
       </div>
 
       <div v-if="weekly" class="sprints-container">

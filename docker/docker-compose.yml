@@ -5,8 +5,6 @@ services:
       dockerfile: docker/Dockerfile.client
     image: ${REGISTRY:-docker.io}/injurka/release-portal-client:${V_CLIENT:-latest}
     restart: unless-stopped
-    volumes:
-      - ./configs:/usr/share/nginx/html/configs
     networks:
       - trip-net
     labels:

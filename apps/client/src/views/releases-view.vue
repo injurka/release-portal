@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import ReleaseCard from '~/components/release-card.vue'
+import { computed, onMounted } from 'vue'
+import { PBtn } from '~/components/01.kit/p-btn'
+import { PInput } from '~/components/01.kit/p-input'
+import { PSelect } from '~/components/01.kit/p-select'
+import { ReleaseCard } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
 
 const {
@@ -11,6 +14,15 @@ const {
   fetchReleases,
   fetchProjectsList,
 } = useReleases()
+
+const envOptions = [
+  { label: 'Dev', value: 'dev' },
+  { label: 'Test', value: 'test' },
+]
+
+const projectOptions = computed(() =>
+  projectList.value.map(p => ({ label: p, value: p })),
+)
 
 onMounted(() => {
   if (releases.value.length === 0)
@@ -23,38 +35,36 @@ onMounted(() => {
 <template>
   <div class="releases-view">
     <div class="filters-bar">
-      <select v-model="filters.environment" class="base-input">
-        <option value="">
-          Все стенды
-        </option>
-        <option value="dev">
-          Dev
-        </option>
-        <option value="test">
-          Test
-        </option>
-        <option value="prod">
-          Prod
-        </option>
-      </select>
+      <div class="filter-item">
+        <PSelect
+          v-model="filters.environment"
+          :options="envOptions"
+          placeholder="Все стенды"
+          clearable
+        />
+      </div>
 
-      <!-- Заменили текстовый инпут на select -->
-      <select v-model="filters.project" class="base-input">
-        <option value="">
-          Все проекты
-        </option>
-        <option v-for="p in projectList" :key="p" :value="p">
-          {{ p }}
-        </option>
-      </select>
+      <div class="filter-item">
+        <PSelect
+          v-model="filters.project"
+          :options="projectOptions"
+          placeholder="Все проекты"
+          clearable
+        />
+      </div>
 
-      <input v-model="filters.trigger_user" placeholder="Автор (alice.dev)" class="base-input">
-      <button class="btn-primary" @click="fetchReleases">
+      <div class="filter-item">
+        <PInput
+          v-model="filters.trigger_user"
+          placeholder="Автор (alice.dev)"
+        />
+      </div>
+
+      <PBtn type="primary" class="fetch-btn" @click="fetchReleases">
         Применить
-      </button>
+      </PBtn>
     </div>
 
-    <!-- Показываем лоадер только для контента -->
     <div v-if="loading">
       Загрузка...
     </div>
@@ -80,37 +90,24 @@ onMounted(() => {
   gap: 16px;
   margin-bottom: 32px;
   flex-wrap: wrap;
+  align-items: center;
 }
-.base-input {
-  background-color: var(--bg-secondary-color);
-  border: 1px solid var(--border-primary-color);
-  color: var(--fg-primary-color);
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
+
+.filter-item {
+  flex: 1;
+  min-width: 200px;
 }
-.base-input:focus {
-  border-color: var(--border-focus-color);
+
+.fetch-btn {
+  height: 36px;
 }
-.btn-primary {
-  background-color: var(--bg-accent-color);
-  color: var(--fg-primary-color);
-  border: 1px solid var(--border-accent-color);
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-primary:hover {
-  background-color: var(--bg-action-hover-color);
-}
+
 .releases-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
+
 .empty-state {
   text-align: center;
   padding: 40px;

@@ -10,7 +10,7 @@ const PROJECTS = [
 ]
 
 // Стенды и пользователи
-const ENVIRONMENTS = ['dev', 'test', 'prod']
+const ENVIRONMENTS = ['dev', 'test']
 const USERS = ['gitlab-ci', 'argo-cd', 'alice.dev', 'bob.ops']
 const BRANCH_PREFIXES = ['feat', 'fix', 'tech']
 
@@ -55,12 +55,11 @@ async function seed() {
     const created_at = randomDate(14) // Генерируем за последние 14 дней, чтобы был виден weekly отчет
 
     // Формируем логичное название ветки в зависимости от окружения
-    let branchName = env // Для prod/test это обычно master или test
+    let branchName = 'master' // По умолчанию, для test
     const ticketsCount = Math.floor(Math.random() * 3) + 1 // 1-3 тикета
     const generatedKeys = Array.from({ length: ticketsCount }, () => generateTicketKey())
 
     if (env === 'dev') {
-      // На dev часто едут фиче-ветки
       branchName = `${randomItem(BRANCH_PREFIXES)}/${generatedKeys[0]}`
     }
     else if (env === 'prod') {

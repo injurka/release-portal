@@ -1,9 +1,28 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import ReleaseCard from '~/components/release-card.vue'
+import { Icon } from '@iconify/vue'
+import { onMounted, reactive } from 'vue'
+import { ReleaseCard } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
 
 const { stats, weekly, loading, fetchDashboard } = useReleases()
+
+// Реактивное состояние для сворачивания целых недель
+const collapsedWeeks = reactive({
+  current: false,
+  previous: false,
+})
+
+// Реактивное состояние для сворачивания проектов внутри недель
+const collapsedProjects = reactive<Record<string, boolean>>({})
+
+function toggleWeek(week: 'current' | 'previous') {
+  collapsedWeeks[week] = !collapsedWeeks[week]
+}
+
+function toggleProject(week: 'current' | 'previous', project: string) {
+  const key = `${week}-${project}`
+  collapsedProjects[key] = !collapsedProjects[key]
+}
 
 onMounted(() => {
   if (!stats.value)
@@ -11,6 +30,7 @@ onMounted(() => {
 })
 </script>
 
+<!-- Остальной шаблон (template) и стили (style) остаются прежними, изменения касаются только импортов -->
 <template>
   <div class="dashboard-view">
     <div v-if="loading" />
@@ -31,53 +51,73 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="weekly" class="sprints-container">
-        <!-- ТЕКУЩИЙ СПРИНТ -->
-        <div class="sprint-section">
-          <h2 class="section-title">
-            Текущий спринт
-            <span class="date-range">({{ weekly.currentSprint.dateRange }})</span>
-          </h2>
-
-          <div v-if="Object.keys(weekly.currentSprint.data).length === 0" class="empty-state">
-            В текущем спринте пока не было релизов
+      <div v-if="weekly" class="weeks-container">
+        <!-- ТЕКУЩАЯ НЕДЕЛЯ -->
+        <div class="week-section">
+          <div class="section-header" @click="toggleWeek('current')">
+            <Icon icon="mdi:chevron-down" class="toggle-icon" :class="{ rotated: collapsedWeeks.current }" />
+            <h2 class="section-title">
+              Текущая неделя
+            </h2>
+            <span class="date-range">{{ weekly.currentWeek.dateRange }}</span>
           </div>
 
-          <div v-for="(projectReleases, projectName) in weekly.currentSprint.data" :key="projectName" class="project-group">
-            <h3 class="project-title">
-              {{ projectName }}
-            </h3>
-            <div class="releases-grid">
-              <ReleaseCard
-                v-for="release in projectReleases"
-                :key="release.id"
-                :release="release"
-              />
+          <div v-show="!collapsedWeeks.current" class="section-content">
+            <div v-if="Object.keys(weekly.currentWeek.data).length === 0" class="empty-state">
+              На этой неделе пока не было релизов
+            </div>
+
+            <div v-for="(projectReleases, projectName) in weekly.currentWeek.data" :key="projectName" class="project-group">
+              <div class="project-header" @click="toggleProject('current', String(projectName))">
+                <Icon icon="mdi:chevron-down" class="toggle-icon small" :class="{ rotated: collapsedProjects[`current-${String(projectName)}`] }" />
+                <h3 class="project-title">
+                  {{ projectName }}
+                </h3>
+                <span class="release-count">{{ projectReleases.length }}</span>
+              </div>
+
+              <div v-show="!collapsedProjects[`current-${String(projectName)}`]" class="releases-grid">
+                <ReleaseCard
+                  v-for="release in projectReleases"
+                  :key="release.id"
+                  :release="release"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- ПРОШЛЫЙ СПРИНТ -->
-        <div class="sprint-section">
-          <h2 class="section-title">
-            Прошлый спринт
-            <span class="date-range">({{ weekly.previousSprint.dateRange }})</span>
-          </h2>
-
-          <div v-if="Object.keys(weekly.previousSprint.data).length === 0" class="empty-state">
-            В прошлом спринте релизов не найдено
+        <!-- ПРОШЛАЯ НЕДЕЛЯ -->
+        <div class="week-section">
+          <div class="section-header" @click="toggleWeek('previous')">
+            <Icon icon="mdi:chevron-down" class="toggle-icon" :class="{ rotated: collapsedWeeks.previous }" />
+            <h2 class="section-title">
+              Прошлая неделя
+            </h2>
+            <span class="date-range">{{ weekly.previousWeek.dateRange }}</span>
           </div>
 
-          <div v-for="(projectReleases, projectName) in weekly.previousSprint.data" :key="projectName" class="project-group">
-            <h3 class="project-title">
-              {{ projectName }}
-            </h3>
-            <div class="releases-grid">
-              <ReleaseCard
-                v-for="release in projectReleases"
-                :key="release.id"
-                :release="release"
-              />
+          <div v-show="!collapsedWeeks.previous" class="section-content">
+            <div v-if="Object.keys(weekly.previousWeek.data).length === 0" class="empty-state">
+              На прошлой неделе релизов не найдено
+            </div>
+
+            <div v-for="(projectReleases, projectName) in weekly.previousWeek.data" :key="projectName" class="project-group">
+              <div class="project-header" @click="toggleProject('previous', String(projectName))">
+                <Icon icon="mdi:chevron-down" class="toggle-icon small" :class="{ rotated: collapsedProjects[`previous-${String(projectName)}`] }" />
+                <h3 class="project-title">
+                  {{ projectName }}
+                </h3>
+                <span class="release-count">{{ projectReleases.length }}</span>
+              </div>
+
+              <div v-show="!collapsedProjects[`previous-${String(projectName)}`]" class="releases-grid">
+                <ReleaseCard
+                  v-for="release in projectReleases"
+                  :key="release.id"
+                  :release="release"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -87,6 +127,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+// Все старые стили dashboard-view остаются здесь 1 в 1
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -124,34 +165,96 @@ onMounted(() => {
   }
 }
 
-.sprint-section {
+.week-section {
   margin-bottom: 60px;
 }
 
-.section-title {
-  font-size: 1.5rem;
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 24px;
-  color: var(--fg-primary-color);
   border-bottom: 1px solid var(--border-primary-color);
   padding-bottom: 12px;
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-bottom-color: var(--border-focus-color);
+
+    .section-title {
+      color: var(--fg-action-hover-color);
+    }
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--fg-primary-color);
+    transition: color 0.2s ease;
+  }
 
   .date-range {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--fg-tertiary-color);
-    font-weight: 500;
+    background-color: var(--bg-tertiary-color);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-secondary-color);
   }
 }
 
 .project-group {
   margin-bottom: 40px;
+}
+
+.project-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  user-select: none;
+  width: fit-content;
+
+  &:hover {
+    .project-title {
+      color: var(--fg-action-hover-color);
+    }
+  }
 
   .project-title {
     font-size: 1.2rem;
     color: var(--fg-accent-color);
-    margin-bottom: 16px;
+    margin: 0;
+    transition: color 0.2s ease;
+  }
+
+  .release-count {
+    font-size: 0.8rem;
+    color: var(--fg-secondary-color);
+    background-color: var(--bg-tertiary-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-secondary-color);
+  }
+}
+
+.toggle-icon {
+  font-size: 1.8rem;
+  color: var(--fg-secondary-color);
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+
+  &.rotated {
+    transform: rotate(-90deg);
+  }
+
+  &.small {
+    font-size: 1.5rem;
+    color: var(--fg-tertiary-color);
   }
 }
 

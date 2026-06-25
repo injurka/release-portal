@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@iconify-icons/mdi": "^1.2.48",
+    "@vueuse/core": "^14.3.0",
+    "reka-ui": "^2.10.0",
     "vue": "beta"
   },
   "devDependencies": {
@@ -33,9 +35,12 @@
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
+    "@vitest/coverage-v8": "4.1.9",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
     "eslint": "^10.5.0",
     "eslint-plugin-format": "2.0.1",
+    "happy-dom": "^20.10.6",
     "jiti": "^2.7.0",
     "npm-run-all2": "^9.0.2",
     "rollup-plugin-visualizer": "^7.0.1",
@@ -46,6 +51,7 @@
     "vite": "^8.0.16",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-vue-devtools": "^8.1.2",
+    "vitest": "^4.1.9",
     "vue-tsc": "^3.3.5"
   },
   "overrides": {

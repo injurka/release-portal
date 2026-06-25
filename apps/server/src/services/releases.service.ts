@@ -42,8 +42,7 @@ export async function getAllReleases(filters?: {
   }))
 }
 
-// 2. Еженедельный дайджест (оставлен без изменений)
-// Еженедельный дайджест по спринтам
+// 2. Еженедельный дайджест (Текущая и прошлая неделя)
 export async function getWeeklyReport(env?: string) {
   const now = new Date()
 
@@ -57,11 +56,16 @@ export async function getWeeklyReport(env?: string) {
   currentMonday.setDate(now.getDate() + diffToMonday)
   currentMonday.setHours(0, 0, 0, 0)
 
+  // Воскресенье текущей недели (23:59:59)
+  const currentSunday = new Date(currentMonday)
+  currentSunday.setDate(currentMonday.getDate() + 7)
+  currentSunday.setMilliseconds(-1)
+
   // Понедельник прошлой недели
   const previousMonday = new Date(currentMonday)
   previousMonday.setDate(currentMonday.getDate() - 7)
 
-  // Воскресенье прошлой недели (конец прошлого спринта)
+  // Воскресенье прошлой недели
   const previousSunday = new Date(currentMonday)
   previousSunday.setMilliseconds(-1)
 
@@ -83,34 +87,34 @@ export async function getWeeklyReport(env?: string) {
     orderBy: [desc(releases.created_at)],
   })
 
-  const currentSprintData: Record<string, any[]> = {}
-  const previousSprintData: Record<string, any[]> = {}
+  const currentWeekData: Record<string, any[]> = {}
+  const previousWeekData: Record<string, any[]> = {}
 
-  // Распределяем данные по двум корзинам
+  // Распределяем данные по двум корзинам (неделям)
   results.forEach((curr) => {
     const item = { ...curr, jira_tickets: curr.tickets.map(t => t.ticket_key) }
 
     // Если дата релиза больше или равна текущему понедельнику
     if (curr.created_at >= currMondaySql) {
-      if (!currentSprintData[curr.project])
-        currentSprintData[curr.project] = []
-      currentSprintData[curr.project].push(item)
+      if (!currentWeekData[curr.project])
+        currentWeekData[curr.project] = []
+      currentWeekData[curr.project].push(item)
     }
     else {
-      if (!previousSprintData[curr.project])
-        previousSprintData[curr.project] = []
-      previousSprintData[curr.project].push(item)
+      if (!previousWeekData[curr.project])
+        previousWeekData[curr.project] = []
+      previousWeekData[curr.project].push(item)
     }
   })
 
   return {
-    currentSprint: {
-      dateRange: `${toStr(currentMonday)} — ${toStr(now)}`,
-      data: currentSprintData,
+    currentWeek: {
+      dateRange: `${toStr(currentMonday)} — ${toStr(currentSunday)}`,
+      data: currentWeekData,
     },
-    previousSprint: {
+    previousWeek: {
       dateRange: `${toStr(previousMonday)} — ${toStr(previousSunday)}`,
-      data: previousSprintData,
+      data: previousWeekData,
     },
   }
 }
@@ -120,7 +124,7 @@ export async function getReleasesByTicket(ticketKey: string) {
   const foundTickets = await db.query.tickets.findMany({
     where: eq(tickets.ticket_key, ticketKey.toUpperCase()),
     with: {
-      release: true, // Подтягиваем информацию о самом релизе
+      release: true,
     },
     orderBy: [desc(tickets.id)],
   })

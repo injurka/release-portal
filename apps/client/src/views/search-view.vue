@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PBtn } from '~/components/01.kit/p-btn'
+import { PInput } from '~/components/01.kit/p-input'
+import { ReleaseCard } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
-import ReleaseCard from '~/components/release-card.vue'
 
 const { searchTicket, searchResults, loading, doSearch } = useReleases()
 </script>
@@ -8,13 +10,15 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
 <template>
   <div class="search-view">
     <div class="search-bar">
-      <input 
-        v-model="searchTicket" 
+      <PInput
+        v-model="searchTicket"
+        placeholder="Введите номер задачи, например PSB-1234..."
+        class="search-input"
         @keyup.enter="doSearch"
-        placeholder="Введите номер задачи, например PSB-1234..." 
-        class="base-input large" 
       />
-      <button class="btn-primary large" @click="doSearch">Найти</button>
+      <PBtn type="primary" class="search-btn" @click="doSearch">
+        Найти
+      </PBtn>
     </div>
 
     <div v-if="searchResults.length > 0" class="releases-grid">
@@ -24,7 +28,7 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
         :release="release"
       />
     </div>
-    
+
     <div v-else-if="searchTicket && !loading && searchResults.length === 0" class="empty-state">
       По вашему запросу релизов не найдено
     </div>
@@ -38,42 +42,17 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
   margin-bottom: 40px;
   max-width: 800px;
   margin-inline: auto;
+  align-items: center;
 }
 
-.base-input {
-  background-color: var(--bg-secondary-color);
-  border: 1px solid var(--border-primary-color);
-  color: var(--fg-primary-color);
-  border-radius: 8px;
-  outline: none;
-
-  &:focus {
-    border-color: var(--border-focus-color);
-  }
-
-  &.large {
-    flex-grow: 1;
-    font-size: 1.2rem;
-    padding: 16px 24px;
-  }
+.search-input {
+  flex-grow: 1;
 }
 
-.btn-primary {
-  background-color: var(--bg-accent-color);
-  color: var(--fg-primary-color);
-  border: 1px solid var(--border-accent-color);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--bg-action-hover-color);
-  }
-
-  &.large {
-    padding: 16px 32px;
-    font-size: 1.2rem;
-  }
+.search-btn {
+  height: 40px;
+  padding: 0 32px;
+  font-size: 1.1rem;
 }
 
 .releases-grid {

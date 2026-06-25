@@ -1,28 +1,12 @@
 <script setup lang="ts">
-import type { Release } from '../shared/types/release'
-import { computed } from 'vue'
+import type { Release } from '~/shared/types/release'
+import { useReleaseCard } from '../composables/use-release-card'
 
 const props = defineProps<{
   release: Release
 }>()
 
-const envClass = computed(() => {
-  const env = props.release.environment.toLowerCase()
-  if (['test'].includes(env))
-    return 'env-test'
-  if (['dev'].includes(env))
-    return 'env-dev'
-  return ''
-})
-
-const formattedDate = computed(() => {
-  return new Date(props.release.created_at).toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-})
+const { envClass, formattedDate } = useReleaseCard(() => props.release)
 </script>
 
 <template>

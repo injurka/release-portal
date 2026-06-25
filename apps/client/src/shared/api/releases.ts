@@ -1,4 +1,4 @@
-import type { DashboardStats, Release, ReleaseFilters } from '../types/release'
+import type { DashboardStats, Release, ReleaseFilters, WeeklyReportResponse } from '../types/release'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://release-portal-api.trip-scheduler.ru/api/releases'
 
@@ -29,7 +29,7 @@ export const releasesApi = {
     return res.json()
   },
 
-  // Еженедельный дайджест сгруппированный по проектам и спринтам
+  // Еженедельный дайджест сгруппированный по проектам и неделям
   async getWeekly(env?: string): Promise<WeeklyReportResponse> {
     const url = new URL(`${API_BASE}/weekly`)
     if (env)
@@ -65,7 +65,7 @@ export const releasesApi = {
     return res.json()
   },
 
-  // Получить список уникальных проектов (добавить в объект releasesApi)
+  // Получить список уникальных проектов
   async getProjectsList(): Promise<string[]> {
     const res = await fetch(`${API_BASE}/projects`)
     if (!res.ok)

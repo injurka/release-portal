@@ -27,12 +27,12 @@ export interface ReleaseFilters {
   limit?: number
 }
 
-export interface SprintDigest {
+export interface WeekDigest {
   dateRange: string
   data: Record<string, Release[]>
 }
 
 export interface WeeklyReportResponse {
-  currentSprint: SprintDigest
-  previousSprint: SprintDigest
+  currentWeek: WeekDigest
+  previousWeek: WeekDigest
 }

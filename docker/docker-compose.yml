@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=4446
-      - DB_PATH=/db/release-portal.sqlite
+      - DB_PATH=/db/releases.sqlite
     volumes:
       - ./db:/db
     networks:

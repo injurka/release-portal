@@ -10,7 +10,7 @@
       "command": "bunx",
       "args": [
         "mcp-server-sqlite-npx",
-        "apps/server/db/release-portal.sqlite"
+        "apps/server/db/releases.sqlite"
       ]
     },
     "bun-docs": {

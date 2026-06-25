@@ -1,0 +1,44 @@
+services:
+  release-portal-client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.client
+    image: ${REGISTRY:-docker.io}/injurka/release-portal-client:${V_CLIENT:-latest}
+    restart: unless-stopped
+    volumes:
+      - ./configs:/usr/share/nginx/html/configs
+    networks:
+      - trip-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.insight-client.rule=Host(`release-portal.trip-scheduler.ru`)"
+      - "traefik.http.routers.insight-client.entrypoints=websecure"
+      - "traefik.http.routers.insight-client.tls.certresolver=letsencrypt"
+      - "traefik.http.services.insight-client.loadbalancer.server.port=3336"
+      - "traefik.docker.network=trip-net"
+
+  release-portal-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+    image: ${REGISTRY:-docker.io}/injurka/release-portal-server:${V_SERVER:-latest}
+    restart: unless-stopped
+    environment:
+      - PORT=4446
+      - DB_PATH=/db/release-portal.sqlite
+    volumes:
+      - ./db:/db
+    networks:
+      - trip-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.insight-server.rule=Host(`release-portal-api.trip-scheduler.ru`)"
+      - "traefik.http.routers.insight-server.entrypoints=websecure"
+      - "traefik.http.routers.insight-server.tls.certresolver=letsencrypt"
+      - "traefik.http.services.insight-server.loadbalancer.server.port=4446"
+      - "traefik.docker.network=trip-net"
+
+networks:
+  trip-net:
+    external: true
+    name: trip-net

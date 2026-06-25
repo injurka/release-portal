@@ -15,6 +15,13 @@
       "when": 1782403941544,
       "tag": "0001_soft_mesmero",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782423248190,
+      "tag": "0002_jazzy_power_man",
+      "breakpoints": true
     }
   ]
 }

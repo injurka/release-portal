@@ -65,23 +65,24 @@ onMounted(() => {
       </PBtn>
     </div>
 
-    <!-- Отображаем скелетоны во время загрузки -->
-    <div v-if="loading" class="releases-grid">
-      <ReleaseCardSkeleton v-for="i in 12" :key="i" />
-    </div>
+    <!-- Анимация переключения данных/загрузки -->
+    <Transition name="fade" mode="out-in">
+      <div v-if="loading" key="loading" class="releases-grid">
+        <ReleaseCardSkeleton v-for="i in 12" :key="i" />
+      </div>
 
-    <template v-else>
-      <div v-if="releases.length === 0" class="empty-state">
+      <div v-else-if="releases.length === 0" key="empty" class="empty-state">
         Ничего не найдено
       </div>
-      <div v-else class="releases-grid">
+
+      <div v-else key="content" class="releases-grid">
         <ReleaseCard
           v-for="release in releases"
           :key="release.id"
           :release="release"
         />
       </div>
-    </template>
+    </Transition>
   </div>
 </template>
 

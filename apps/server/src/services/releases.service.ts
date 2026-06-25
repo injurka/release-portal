@@ -2,7 +2,6 @@ import { and, count, desc, eq, gte, like, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { releases, tickets } from '../db/schema'
 
-// 1. Получение релизов с мощной фильтрацией
 export async function getAllReleases(filters?: {
   environment?: string
   project?: string
@@ -13,7 +12,6 @@ export async function getAllReleases(filters?: {
   limit?: number
 }) {
   const conditions = []
-
   if (filters?.environment)
     conditions.push(eq(releases.environment, filters.environment))
   if (filters?.project)
@@ -42,99 +40,58 @@ export async function getAllReleases(filters?: {
   }))
 }
 
-// 2. Еженедельный дайджест (Текущая и прошлая неделя)
-export async function getWeeklyReport(env?: string) {
+export async function getDigestReport(period: 'today' | 'week' | 'two-weeks', env?: string) {
   const now = new Date()
+  const startDate = new Date(now)
 
-  // Получаем день недели (0 - воскресенье, 1 - понедельник и т.д.)
-  const day = now.getDay()
-  // Если сегодня воскресенье (0), отнимаем 6 дней. Иначе отнимаем (day - 1)
-  const diffToMonday = day === 0 ? -6 : 1 - day
+  if (period === 'today') {
+    startDate.setHours(0, 0, 0, 0)
+  }
+  else if (period === 'week') {
+    const day = now.getDay()
+    const diffToMonday = day === 0 ? -6 : 1 - day
+    startDate.setDate(now.getDate() + diffToMonday)
+    startDate.setHours(0, 0, 0, 0)
+  }
+  else if (period === 'two-weeks') {
+    const day = now.getDay()
+    const diffToMonday = day === 0 ? -6 : 1 - day
+    startDate.setDate(now.getDate() + diffToMonday - 7)
+    startDate.setHours(0, 0, 0, 0)
+  }
 
-  // Понедельник текущей недели (00:00:00)
-  const currentMonday = new Date(now)
-  currentMonday.setDate(now.getDate() + diffToMonday)
-  currentMonday.setHours(0, 0, 0, 0)
-
-  // Воскресенье текущей недели (23:59:59)
-  const currentSunday = new Date(currentMonday)
-  currentSunday.setDate(currentMonday.getDate() + 7)
-  currentSunday.setMilliseconds(-1)
-
-  // Понедельник прошлой недели
-  const previousMonday = new Date(currentMonday)
-  previousMonday.setDate(currentMonday.getDate() - 7)
-
-  // Воскресенье прошлой недели
-  const previousSunday = new Date(currentMonday)
-  previousSunday.setMilliseconds(-1)
-
-  // Утилиты форматирования
   const toSqliteDate = (d: Date) => d.toISOString().replace('T', ' ').slice(0, 19)
-  const toStr = (d: Date) => d.toLocaleDateString('ru-RU') // Даст формат DD.MM.YYYY
+  const toStr = (d: Date) => d.toLocaleDateString('ru-RU')
 
-  const prevMondaySql = toSqliteDate(previousMonday)
-  const currMondaySql = toSqliteDate(currentMonday)
-
-  // Запрашиваем все релизы, начиная с понедельника ПРОШЛОЙ недели
-  const conditions = [gte(releases.created_at, prevMondaySql)]
+  const conditions = [gte(releases.created_at, toSqliteDate(startDate))]
   if (env)
     conditions.push(eq(releases.environment, env))
 
   const results = await db.query.releases.findMany({
-    where: and(...conditions),
+    where: conditions.length > 0 ? and(...conditions) : undefined,
     with: { tickets: true },
     orderBy: [desc(releases.created_at)],
   })
 
-  const currentWeekData: Record<string, any[]> = {}
-  const previousWeekData: Record<string, any[]> = {}
-
-  // Распределяем данные по двум корзинам (неделям)
+  const data: Record<string, any[]> = {}
   results.forEach((curr) => {
     const item = { ...curr, jira_tickets: curr.tickets.map(t => t.ticket_key) }
-
-    // Если дата релиза больше или равна текущему понедельнику
-    if (curr.created_at >= currMondaySql) {
-      if (!currentWeekData[curr.project])
-        currentWeekData[curr.project] = []
-      currentWeekData[curr.project].push(item)
-    }
-    else {
-      if (!previousWeekData[curr.project])
-        previousWeekData[curr.project] = []
-      previousWeekData[curr.project].push(item)
-    }
+    if (!data[curr.project])
+      data[curr.project] = []
+    data[curr.project].push(item)
   })
 
-  return {
-    currentWeek: {
-      dateRange: `${toStr(currentMonday)} — ${toStr(currentSunday)}`,
-      data: currentWeekData,
-    },
-    previousWeek: {
-      dateRange: `${toStr(previousMonday)} — ${toStr(previousSunday)}`,
-      data: previousWeekData,
-    },
-  }
+  return { dateRange: `${toStr(startDate)} — ${toStr(now)}`, data }
 }
 
-// 3. Поиск всех релизов, в которые попала конкретная задача из Jira
 export async function getReleasesByTicket(ticketKey: string) {
   const foundTickets = await db.query.tickets.findMany({
     where: like(tickets.ticket_key, `%${ticketKey.toUpperCase()}%`),
-    with: {
-      release: {
-        with: {
-          tickets: true,
-        },
-      },
-    },
+    with: { release: { with: { tickets: true } } },
     orderBy: [desc(tickets.id)],
   })
 
   const uniqueReleases = new Map()
-
   for (const t of foundTickets) {
     if (!uniqueReleases.has(t.release.id)) {
       uniqueReleases.set(t.release.id, {
@@ -143,23 +100,15 @@ export async function getReleasesByTicket(ticketKey: string) {
       })
     }
   }
-
   return Array.from(uniqueReleases.values())
 }
 
-// 4. Получение дашборд-статистики (для виджетов на Vue)
 export async function getDashboardStats() {
   const [totalReleases] = await db.select({ value: count() }).from(releases)
-
   const releasesByEnv = await db.select({
     environment: releases.environment,
     count: count(),
   }).from(releases).groupBy(releases.environment)
-
-  const topProjects = await db.select({
-    project: releases.project,
-    count: count(),
-  }).from(releases).groupBy(releases.project).orderBy(desc(count())).limit(5)
 
   const topUsers = await db.select({
     user: releases.trigger_user,
@@ -169,12 +118,10 @@ export async function getDashboardStats() {
   return {
     total: totalReleases.value,
     by_environment: releasesByEnv,
-    top_projects: topProjects,
     top_users: topUsers,
   }
 }
 
-// 5. Создание релиза
 export async function createRelease(payload: {
   project: string
   tag: string
@@ -183,14 +130,14 @@ export async function createRelease(payload: {
   environment: string
   trigger_user: string
   jira_tickets?: string[]
+  type?: string
+  meta?: any
 }) {
   const allTickets = new Set<string>(payload.jira_tickets || [])
   if (payload.branch) {
-    const regex = /[A-Z]+-\d+/g
-    const matches = payload.branch.match(regex)
-    if (matches) {
+    const matches = payload.branch.match(/[A-Z]+-\d+/g)
+    if (matches)
       matches.forEach(m => allTickets.add(m))
-    }
   }
 
   return await db.transaction(async (tx) => {
@@ -201,6 +148,8 @@ export async function createRelease(payload: {
       branch: payload.branch,
       environment: payload.environment,
       trigger_user: payload.trigger_user,
+      type: payload.type,
+      meta: payload.meta,
     }).returning({ id: releases.id })
 
     if (allTickets.size > 0) {
@@ -216,10 +165,6 @@ export async function createRelease(payload: {
 }
 
 export async function getUniqueProjects() {
-  const results = await db
-    .select({ project: releases.project })
-    .from(releases)
-    .groupBy(releases.project)
-
+  const results = await db.select({ project: releases.project }).from(releases).groupBy(releases.project)
   return results.map(r => r.project)
 }

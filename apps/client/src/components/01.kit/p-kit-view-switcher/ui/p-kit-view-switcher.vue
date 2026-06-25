@@ -181,16 +181,10 @@ onMounted(() => {
 
   &.is-active {
     color: var(--fg-accent-color);
-    font-weight: 600;
   }
 
   &:not(.is-active):hover:not(:disabled) {
     color: var(--fg-primary-color);
-    transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
   }
 }
 

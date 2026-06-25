@@ -1,30 +1,16 @@
 <script setup lang="ts">
-import type { TabItem } from '~/components/01.kit/p-kit-tabs'
-import { markRaw, ref } from 'vue'
-import { KitTabs } from '~/components/01.kit/p-kit-tabs'
 import DashboardView from '~/views/dashboard-view.vue'
 import ReleasesView from '~/views/releases-view.vue'
 import SearchView from '~/views/search-view.vue'
 
 const activeTab = ref<'dashboard' | 'all' | 'search'>('dashboard')
 
-const tabItems: TabItem<'dashboard' | 'all' | 'search'>[] = [
-  {
-    id: 'dashboard',
-    label: 'Дашборд',
-    component: markRaw(DashboardView),
-  },
-  {
-    id: 'all',
-    label: 'Все релизы',
-    component: markRaw(ReleasesView),
-  },
-  {
-    id: 'search',
-    label: 'Поиск задачи',
-    component: markRaw(SearchView),
-  },
-]
+// Сопоставляем ключи табов с самими компонентами
+const views = {
+  dashboard: DashboardView,
+  all: ReleasesView,
+  search: SearchView,
+}
 </script>
 
 <template>
@@ -32,12 +18,40 @@ const tabItems: TabItem<'dashboard' | 'all' | 'search'>[] = [
     <header class="header">
       <div class="header-content">
         <h1>Release Portal</h1>
+        <nav class="nav-tabs">
+          <button
+            :class="{ active: activeTab === 'dashboard' }"
+            @click="activeTab = 'dashboard'"
+          >
+            Дашборд
+          </button>
+          <button
+            :class="{ active: activeTab === 'all' }"
+            @click="activeTab = 'all'"
+          >
+            Все релизы
+          </button>
+          <button
+            :class="{ active: activeTab === 'search' }"
+            @click="activeTab = 'search'"
+          >
+            Поиск задачи
+          </button>
+        </nav>
       </div>
     </header>
 
     <main class="main-content">
-      <!-- Теперь слоты не нужны, KitTabs сам отрендерит нужный компонент и закэширует его -->
-      <KitTabs v-model="activeTab" :items="tabItems" :cache="true" />
+      <!--
+        Transition обеспечивает плавную анимацию (используя классы .fade из normalize.scss),
+        mode="out-in" ждет завершения скрытия старого таба перед показом нового.
+        KeepAlive сохраняет состояние компонентов в памяти (как было при v-show).
+      -->
+      <Transition name="fade" mode="out-in">
+        <KeepAlive>
+          <component :is="views[activeTab]" />
+        </KeepAlive>
+      </Transition>
     </main>
   </div>
 </template>
@@ -52,7 +66,7 @@ const tabItems: TabItem<'dashboard' | 'all' | 'search'>[] = [
 .header {
   background-color: var(--bg-tertiary-color);
   border-bottom: 1px solid var(--border-primary-color);
-  padding: 32px 20px;
+  padding: 40px 20px 0;
   text-align: center;
 
   .header-content {
@@ -60,10 +74,37 @@ const tabItems: TabItem<'dashboard' | 'all' | 'search'>[] = [
     margin: 0 auto;
 
     h1 {
-      margin: 0;
+      margin: 0 0 24px 0;
       font-size: 2.5rem;
       font-weight: 600;
       color: var(--fg-primary-color);
+    }
+  }
+}
+
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  button {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--fg-secondary-color);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: var(--fg-primary-color);
+      background-color: var(--bg-hover-color);
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    &.active {
+      color: var(--fg-accent-color);
+      border-bottom-color: var(--border-focus-color);
     }
   }
 }

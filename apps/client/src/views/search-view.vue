@@ -21,13 +21,13 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
       </PBtn>
     </div>
 
-    <!-- Отображаем скелетоны во время загрузки -->
-    <div v-if="loading" class="releases-grid">
-      <ReleaseCardSkeleton v-for="i in 6" :key="i" />
-    </div>
+    <!-- Анимация переключения данных/загрузки -->
+    <Transition name="fade" mode="out-in">
+      <div v-if="loading" key="loading" class="releases-grid">
+        <ReleaseCardSkeleton v-for="i in 6" :key="i" />
+      </div>
 
-    <template v-else>
-      <div v-if="searchResults.length > 0" class="releases-grid">
+      <div v-else-if="searchResults.length > 0" key="content" class="releases-grid">
         <ReleaseCard
           v-for="release in searchResults"
           :key="release.id"
@@ -35,10 +35,10 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
         />
       </div>
 
-      <div v-else-if="searchTicket && searchResults.length === 0" class="empty-state">
+      <div v-else-if="searchTicket && searchResults.length === 0" key="empty" class="empty-state">
         По вашему запросу релизов не найдено
       </div>
-    </template>
+    </Transition>
   </div>
 </template>
 

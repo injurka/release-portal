@@ -8,12 +8,13 @@ export interface Release {
   trigger_user: string
   created_at: string
   jira_tickets: string[]
+  type?: 'frontend' | 'backend' | string
+  meta?: Record<string, any> | null
 }
 
 export interface DashboardStats {
   total: number
   by_environment: { environment: string, count: number }[]
-  top_projects: { project: string, count: number }[]
   top_users: { user: string, count: number }[]
 }
 
@@ -27,12 +28,7 @@ export interface ReleaseFilters {
   limit?: number
 }
 
-export interface WeekDigest {
+export interface DigestReport {
   dateRange: string
   data: Record<string, Release[]>
-}
-
-export interface WeeklyReportResponse {
-  currentWeek: WeekDigest
-  previousWeek: WeekDigest
 }

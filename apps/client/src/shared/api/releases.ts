@@ -1,4 +1,4 @@
-import type { DashboardStats, Release, ReleaseFilters, WeeklyReportResponse } from '../types/release'
+import type { DashboardStats, DigestReport, Release, ReleaseFilters } from '../types/release'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://release-portal-api.trip-scheduler.ru/api/releases'
 
@@ -29,15 +29,16 @@ export const releasesApi = {
     return res.json()
   },
 
-  // Еженедельный дайджест сгруппированный по проектам и неделям
-  async getWeekly(env?: string): Promise<WeeklyReportResponse> {
-    const url = new URL(`${API_BASE}/weekly`)
+  // Дайджест по проектам с выбором периода
+  async getDigest(period: 'today' | 'week' | 'two-weeks', env?: string): Promise<DigestReport> {
+    const url = new URL(`${API_BASE}/digest`)
+    url.searchParams.append('period', period)
     if (env)
       url.searchParams.append('environment', env)
 
     const res = await fetch(url.toString())
     if (!res.ok)
-      throw new Error('Failed to fetch weekly report')
+      throw new Error('Failed to fetch digest report')
     return res.json()
   },
 

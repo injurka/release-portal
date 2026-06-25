@@ -9,6 +9,8 @@ export const releases = sqliteTable('releases', {
   branch: text('branch'),
   environment: text('environment').notNull(),
   trigger_user: text('trigger_user').notNull(),
+  type: text('type').default('unknown'), 
+  meta: text('meta', { mode: 'json' }), 
   created_at: text('created_at')
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),

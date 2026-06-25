@@ -3,14 +3,12 @@ import {
   createRelease,
   getAllReleases,
   getDashboardStats,
+  getDigestReport,
   getReleasesByTicket,
   getUniqueProjects,
-  getWeeklyReport,
 } from '../services/releases.service'
 
 export const releasesPlugin = new Elysia({ prefix: '/api/releases' })
-
-  // 1. Получение всех релизов (с глубокой фильтрацией)
   .get('/', async ({ query }) => {
     return await getAllReleases({
       environment: query.environment,
@@ -27,70 +25,39 @@ export const releasesPlugin = new Elysia({ prefix: '/api/releases' })
       project: t.Optional(t.String()),
       trigger_user: t.Optional(t.String()),
       branch: t.Optional(t.String()),
-      start_date: t.Optional(t.String({ format: 'date-time' })), // Ожидаем YYYY-MM-DD или ISO
+      start_date: t.Optional(t.String({ format: 'date-time' })),
       end_date: t.Optional(t.String({ format: 'date-time' })),
       limit: t.Optional(t.Numeric()),
     }),
   })
-
-  // 2. Статистика для дашборда (диаграммы, графики)
   .get('/stats', async () => {
     return await getDashboardStats()
   })
-
-  // 3. Еженедельный дайджест (сгруппировано по проектам)
-  .get('/weekly', async ({ query }) => {
-    return await getWeeklyReport(query.environment)
+  .get('/digest', async ({ query }) => {
+    return await getDigestReport(query.period as 'today' | 'week' | 'two-weeks', query.environment)
   }, {
     query: t.Object({
+      period: t.Union([t.Literal('today'), t.Literal('week'), t.Literal('two-weeks')]),
       environment: t.Optional(t.String()),
     }),
   })
-
-  // 4. Получить все релизы конкретного пользователя (автора)
   .get('/users/:username', async ({ params, query }) => {
     return await getAllReleases({
       trigger_user: params.username,
       limit: query.limit,
     })
   }, {
-    params: t.Object({
-      username: t.String(),
-    }),
-    query: t.Object({
-      limit: t.Optional(t.Numeric()),
-    }),
+    params: t.Object({ username: t.String() }),
+    query: t.Object({ limit: t.Optional(t.Numeric()) }),
   })
-
-  // 5. Получить все релизы конкретного проекта/микросервиса
-  .get('/projects/:project', async ({ params, query }) => {
-    return await getAllReleases({
-      project: params.project,
-      limit: query.limit,
-    })
-  }, {
-    params: t.Object({
-      project: t.String(),
-    }),
-    query: t.Object({
-      limit: t.Optional(t.Numeric()),
-    }),
-  })
-
-  // 6. Найти релизы по номеру Jira задачи (например: /api/releases/tickets/PSB-1234)
   .get('/tickets/:ticket', async ({ params }) => {
     return await getReleasesByTicket(params.ticket)
   }, {
-    params: t.Object({
-      ticket: t.String(),
-    }),
+    params: t.Object({ ticket: t.String() }),
   })
-
-  // 7. Создание записи о релизе (вебхук из GitLab CI)
   .post('/', async ({ body, set }) => {
     try {
       await createRelease(body)
-
       set.status = 201
       return { success: true, message: 'Release logged successfully' }
     }
@@ -108,14 +75,13 @@ export const releasesPlugin = new Elysia({ prefix: '/api/releases' })
       environment: t.String(),
       trigger_user: t.String(),
       jira_tickets: t.Optional(t.Array(t.String())),
+      type: t.Optional(t.String()),
+      meta: t.Optional(t.Any()), // JSON payload
     }),
   })
-
   .get('/projects', async () => {
     return await getUniqueProjects()
   })
-
-  // 5. Получить все релизы конкретного проекта/микросервиса
   .get('/projects/:project', async ({ params, query }) => {
     return await getAllReleases({
       project: params.project,

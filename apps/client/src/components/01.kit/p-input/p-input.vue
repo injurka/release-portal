@@ -66,7 +66,7 @@ defineExpose({ focus })
 }
 
 .p-input-field {
-  height: 40px;
+  height: 36px;
   padding: 0 12px;
   border: 1px solid var(--border-primary-color);
   border-radius: 6px;

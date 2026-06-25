@@ -3,7 +3,7 @@ import { computed, onMounted } from 'vue'
 import { PBtn } from '~/components/01.kit/p-btn'
 import { PInput } from '~/components/01.kit/p-input'
 import { PSelect } from '~/components/01.kit/p-select'
-import { ReleaseCard } from '~/components/05.modules/release-card'
+import { ReleaseCard, ReleaseCardSkeleton } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
 
 const {
@@ -65,8 +65,9 @@ onMounted(() => {
       </PBtn>
     </div>
 
-    <div v-if="loading">
-      Загрузка...
+    <!-- Отображаем скелетоны во время загрузки -->
+    <div v-if="loading" class="releases-grid">
+      <ReleaseCardSkeleton v-for="i in 12" :key="i" />
     </div>
 
     <template v-else>

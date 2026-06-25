@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
+import { and, count, desc, eq, gte, like, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { releases, tickets } from '../db/schema'
 
@@ -122,14 +122,29 @@ export async function getWeeklyReport(env?: string) {
 // 3. Поиск всех релизов, в которые попала конкретная задача из Jira
 export async function getReleasesByTicket(ticketKey: string) {
   const foundTickets = await db.query.tickets.findMany({
-    where: eq(tickets.ticket_key, ticketKey.toUpperCase()),
+    where: like(tickets.ticket_key, `%${ticketKey.toUpperCase()}%`),
     with: {
-      release: true,
+      release: {
+        with: {
+          tickets: true,
+        },
+      },
     },
     orderBy: [desc(tickets.id)],
   })
 
-  return foundTickets.map(t => t.release)
+  const uniqueReleases = new Map()
+
+  for (const t of foundTickets) {
+    if (!uniqueReleases.has(t.release.id)) {
+      uniqueReleases.set(t.release.id, {
+        ...t.release,
+        jira_tickets: t.release.tickets.map(ticket => ticket.ticket_key),
+      })
+    }
+  }
+
+  return Array.from(uniqueReleases.values())
 }
 
 // 4. Получение дашборд-статистики (для виджетов на Vue)

@@ -1,64 +1,57 @@
 <script setup lang="ts">
-import type { Release } from '../shared/types/release'
-import { computed } from 'vue'
+import type { Release } from '~/shared/types/release'
+import { Icon } from '@iconify/vue'
+import { useReleaseCard } from '../composables/use-release-card'
 
 const props = defineProps<{
   release: Release
 }>()
 
-const envClass = computed(() => {
-  const env = props.release.environment.toLowerCase()
-  if (['test'].includes(env))
-    return 'env-test'
-  if (['dev'].includes(env))
-    return 'env-dev'
-  return ''
-})
-
-const formattedDate = computed(() => {
-  return new Date(props.release.created_at).toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-})
+const { envClass, formattedDate, showBranch } = useReleaseCard(() => props.release)
 </script>
 
 <template>
   <article class="release-card">
     <header class="card-header">
-      <span class="project-name">{{ release.project }}</span>
+      <div class="project-info">
+        <Icon icon="lucide:layers" class="project-icon" />
+        <span class="project-name">{{ release.project }}</span>
+      </div>
       <span class="env-badge" :class="[envClass]">
         {{ release.environment }}
       </span>
     </header>
 
     <div class="card-body">
-      <h2 class="tag">
-        {{ release.tag }}
-      </h2>
+      <div class="version-info">
+        <template v-if="release.prev_tag">
+          <span class="version prev">{{ release.prev_tag }}</span>
+          <Icon icon="lucide:arrow-right" class="version-arrow" />
+        </template>
+        <span class="version current">{{ release.tag }}</span>
+      </div>
+
       <div class="meta-info">
-        <p class="meta-item">
-          <span class="label">Сравнение:</span>
-          <code class="code-pill">{{ release.prev_tag || 'Начало' }}</code>
-        </p>
-        <p v-if="release.branch" class="meta-item">
-          <span class="label">Ветка:</span>
-          <code class="code-pill branch-pill">{{ release.branch }}</code>
-        </p>
-        <p class="meta-item">
-          <span class="label">Автор:</span>
+        <div class="meta-item" title="Автор релиза">
+          <Icon icon="lucide:user" class="meta-icon" />
           <span class="value">{{ release.trigger_user }}</span>
-        </p>
-        <p class="meta-item date">
-          {{ formattedDate }}
-        </p>
+        </div>
+
+        <div v-if="showBranch" class="meta-item" title="Ветка">
+          <Icon icon="lucide:git-branch" class="meta-icon" />
+          <code class="branch-pill">{{ release.branch }}</code>
+        </div>
+
+        <div class="meta-item date" title="Дата релиза">
+          <Icon icon="lucide:clock" class="meta-icon" />
+          <span>{{ formattedDate }}</span>
+        </div>
       </div>
     </div>
 
     <footer class="tickets-section">
-      <ul v-if="release.jira_tickets.length" class="ticket-list">
+      <!-- Добавлено ?. перед length для защиты от null/undefined -->
+      <ul v-if="release.jira_tickets?.length" class="ticket-list">
         <li v-for="ticket in release.jira_tickets" :key="ticket">
           <a :href="`https://jira.prosebya.ru/browse/${ticket}`" target="_blank" class="ticket-link">
             {{ ticket }}
@@ -73,13 +66,11 @@ const formattedDate = computed(() => {
 </template>
 
 <style scoped lang="scss">
-@use 'sass:map';
-
 .release-card {
   background-color: var(--bg-secondary-color);
   border: 1px solid var(--border-primary-color);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   transition: all 0.2s ease;
@@ -95,20 +86,38 @@ const formattedDate = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 
-  .project-name {
-    font-weight: 600;
-    font-size: map.get($font-sizes, 'small');
+  .project-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--fg-secondary-color);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+
+    .project-icon {
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      line-height: 1;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
   }
 }
 
 .env-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -130,52 +139,84 @@ const formattedDate = computed(() => {
   margin-bottom: 24px;
   flex-grow: 1;
 
-  .tag {
-    margin: 0 0 16px 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--fg-primary-color);
+  .version-info {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    .version {
+      font-family: monospace;
+      font-weight: 700;
+      line-height: 1;
+
+      &.prev {
+        font-size: 1.1rem;
+        color: var(--fg-tertiary-color);
+      }
+
+      &.current {
+        font-size: 1.4rem;
+        color: var(--fg-primary-color);
+      }
+    }
+
+    .version-arrow {
+      color: var(--fg-muted-color);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 
 .meta-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 
   .meta-item {
     margin: 0;
-    font-size: map.get($font-sizes, 'small');
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--fg-secondary-color);
+    line-height: 1;
 
-    .label {
+    .meta-icon {
+      font-size: 1.1rem;
       color: var(--fg-tertiary-color);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .value {
+
+    .value,
+    .date span {
       color: var(--fg-primary-color);
       font-weight: 500;
     }
-    &.date {
-      margin-top: 4px;
-      color: var(--fg-secondary-color);
+
+    &.date span {
+      color: var(--fg-tertiary-color);
     }
   }
 
-  .code-pill {
+  .branch-pill {
+    display: flex;
+    align-items: center;
+    height: 20px;
     background-color: var(--bg-tertiary-color);
     border: 1px solid var(--border-secondary-color);
-    padding: 2px 6px;
+    padding: 0 6px;
     border-radius: 6px;
-    font-family: 'Maple Mono CN', monospace;
+    font-family: monospace;
     font-size: 0.8rem;
-    color: var(--fg-muted-color);
-
-    &.branch-pill {
-      color: var(--fg-info-color);
-      border-color: var(--border-info-color);
-    }
+    color: var(--fg-info-color);
+    border-color: var(--border-info-color);
   }
 }
 
@@ -193,11 +234,14 @@ const formattedDate = computed(() => {
   }
 
   .ticket-link {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
     background-color: var(--bg-accent-color);
     color: var(--fg-accent-color);
     border: 1px solid var(--border-accent-color);
-    padding: 4px 10px;
+    padding: 0 10px;
     border-radius: 6px;
     text-decoration: none;
     font-size: 0.8rem;
@@ -212,8 +256,9 @@ const formattedDate = computed(() => {
 
   .no-tickets {
     margin: 0;
-    font-size: map.get($font-sizes, 'small');
+    font-size: 0.85rem;
     color: var(--fg-tertiary-color);
+    line-height: 1;
   }
 }
 </style>

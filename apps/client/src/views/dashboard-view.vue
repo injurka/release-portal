@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { onMounted, reactive } from 'vue'
-import { ReleaseCard } from '~/components/05.modules/release-card'
+import { ReleaseCard, ReleaseCardSkeleton } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
 
 const { stats, weekly, loading, fetchDashboard } = useReleases()
 
-// Реактивное состояние для сворачивания целых недель
 const collapsedWeeks = reactive({
   current: false,
   previous: false,
 })
 
-// Реактивное состояние для сворачивания проектов внутри недель
 const collapsedProjects = reactive<Record<string, boolean>>({})
 
 function toggleWeek(week: 'current' | 'previous') {
@@ -30,10 +28,18 @@ onMounted(() => {
 })
 </script>
 
-<!-- Остальной шаблон (template) и стили (style) остаются прежними, изменения касаются только импортов -->
 <template>
   <div class="dashboard-view">
-    <div v-if="loading" />
+    <!-- Скелетоны для дашборда -->
+    <div v-if="loading && !stats">
+      <div class="stats-cards">
+        <div class="stat-card skeleton-card" />
+        <div class="stat-card skeleton-card" />
+      </div>
+      <div class="releases-grid">
+        <ReleaseCardSkeleton v-for="i in 6" :key="i" />
+      </div>
+    </div>
 
     <template v-else>
       <div v-if="stats" class="stats-cards">
@@ -127,7 +133,24 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-// Все старые стили dashboard-view остаются здесь 1 в 1
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.skeleton-card {
+  background-color: var(--bg-tertiary-color);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  min-height: 140px;
+}
+
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

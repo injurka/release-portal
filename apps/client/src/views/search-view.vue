@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PBtn } from '~/components/01.kit/p-btn'
 import { PInput } from '~/components/01.kit/p-input'
-import { ReleaseCard } from '~/components/05.modules/release-card'
+import { ReleaseCard, ReleaseCardSkeleton } from '~/components/05.modules/release-card'
 import { useReleases } from '~/composables/use-releases'
 
 const { searchTicket, searchResults, loading, doSearch } = useReleases()
@@ -21,17 +21,24 @@ const { searchTicket, searchResults, loading, doSearch } = useReleases()
       </PBtn>
     </div>
 
-    <div v-if="searchResults.length > 0" class="releases-grid">
-      <ReleaseCard
-        v-for="release in searchResults"
-        :key="release.id"
-        :release="release"
-      />
+    <!-- Отображаем скелетоны во время загрузки -->
+    <div v-if="loading" class="releases-grid">
+      <ReleaseCardSkeleton v-for="i in 6" :key="i" />
     </div>
 
-    <div v-else-if="searchTicket && !loading && searchResults.length === 0" class="empty-state">
-      По вашему запросу релизов не найдено
-    </div>
+    <template v-else>
+      <div v-if="searchResults.length > 0" class="releases-grid">
+        <ReleaseCard
+          v-for="release in searchResults"
+          :key="release.id"
+          :release="release"
+        />
+      </div>
+
+      <div v-else-if="searchTicket && searchResults.length === 0" class="empty-state">
+        По вашему запросу релизов не найдено
+      </div>
+    </template>
   </div>
 </template>
 

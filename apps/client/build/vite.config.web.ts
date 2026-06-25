@@ -14,7 +14,7 @@ const appVersion = process.env.VITE_APP_VERSION || '1.0.0'
 
 export default defineConfig({
   base: '/',
-  root: resolve(__dirname, '../src'),
+  root: resolve(__dirname, '../'),
   publicDir: resolve(__dirname, '../public'),
   envDir: resolve(__dirname, '../'),
   define: {

@@ -9,10 +9,10 @@ services:
       - trip-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.insight-client.rule=Host(`release-portal.trip-scheduler.ru`)"
-      - "traefik.http.routers.insight-client.entrypoints=websecure"
-      - "traefik.http.routers.insight-client.tls.certresolver=letsencrypt"
-      - "traefik.http.services.insight-client.loadbalancer.server.port=3336"
+      - "traefik.http.routers.release-portal-client.rule=Host(`release-portal.trip-scheduler.ru`)"
+      - "traefik.http.routers.release-portal-client.entrypoints=websecure"
+      - "traefik.http.routers.release-portal-client.tls.certresolver=letsencrypt"
+      - "traefik.http.services.release-portal-client.loadbalancer.server.port=3336"
       - "traefik.docker.network=trip-net"
 
   release-portal-server:
@@ -30,10 +30,10 @@ services:
       - trip-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.insight-server.rule=Host(`release-portal-api.trip-scheduler.ru`)"
-      - "traefik.http.routers.insight-server.entrypoints=websecure"
-      - "traefik.http.routers.insight-server.tls.certresolver=letsencrypt"
-      - "traefik.http.services.insight-server.loadbalancer.server.port=4446"
+      - "traefik.http.routers.release-portal-server.rule=Host(`release-portal-api.trip-scheduler.ru`)"
+      - "traefik.http.routers.release-portal-server.entrypoints=websecure"
+      - "traefik.http.routers.release-portal-server.tls.certresolver=letsencrypt"
+      - "traefik.http.services.release-portal-server.loadbalancer.server.port=4446"
       - "traefik.docker.network=trip-net"
 
 networks:

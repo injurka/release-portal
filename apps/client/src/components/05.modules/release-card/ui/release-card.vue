@@ -11,12 +11,12 @@ const props = defineProps<{
 
 const { envClass, formattedDate, showBranch } = useReleaseCard(() => props.release)
 
-// Выбираем иконку по типу сервиса
 const projectIcon = computed(() => {
   if (props.release.type === 'frontend')
     return 'lucide:layout'
   if (props.release.type === 'backend')
     return 'lucide:server'
+
   return 'lucide:layers'
 })
 
@@ -320,9 +320,10 @@ const hasMetaInfo = computed(() => {
     line-height: 1;
   }
 }
+</style>
 
-/* Стили для Popover */
-:global(.meta-popover-content) {
+<style lang="scss">
+.meta-popover-content {
   background-color: var(--bg-primary-color);
   border: 1px solid var(--border-primary-color);
   border-radius: 8px;
@@ -333,7 +334,7 @@ const hasMetaInfo = computed(() => {
   outline: none;
 }
 
-:global(.meta-popover-inner) {
+.meta-popover-inner {
   padding: 16px;
 
   .meta-title {
@@ -390,7 +391,7 @@ const hasMetaInfo = computed(() => {
   }
 }
 
-:global(.meta-popover-arrow) {
+.meta-popover-arrow {
   fill: var(--bg-primary-color);
   stroke: var(--border-primary-color);
   stroke-width: 1px;

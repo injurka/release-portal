@@ -13,6 +13,10 @@ import { visualizerPlugin } from './lib/helpers'
 const appVersion = process.env.VITE_APP_VERSION || '1.0.0'
 
 export default defineConfig({
+  experimental: {
+    bundledDev: true,
+  },
+
   base: '/',
   root: resolve(__dirname, '../'),
   publicDir: resolve(__dirname, '../public'),
